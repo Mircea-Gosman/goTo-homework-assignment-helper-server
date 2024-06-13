@@ -1,59 +1,78 @@
-# Express API Starter with Typescript
+# GoTo Homework Assignment - Helper Server
 
-How to use this template:
+This repository contains a Node.js Express API to support the [frontend exercise](https://github.com/Mircea-Gosman/goTo-homework-assignment). 
 
-```sh
-npx create-express-api --typescript --directory my-api-name
-```
+## Commands
+The project uses npm!
 
-Includes API Server utilities:
-
-* [morgan](https://www.npmjs.com/package/morgan)
-  * HTTP request logger middleware for node.js
-* [helmet](https://www.npmjs.com/package/helmet)
-  * Helmet helps you secure your Express apps by setting various HTTP headers. It's not a silver bullet, but it can help!
-* [dotenv](https://www.npmjs.com/package/dotenv)
-  * Dotenv is a zero-dependency module that loads environment variables from a `.env` file into `process.env`
-* [cors](https://www.npmjs.com/package/cors)
-  * CORS is a node.js package for providing a Connect/Express middleware that can be used to enable CORS with various options.
-
-Development utilities:
-
-* [typescript](https://www.npmjs.com/package/typescript)
-  * TypeScript is a language for application-scale JavaScript.
-* [ts-node](https://www.npmjs.com/package/ts-node)
-  * TypeScript execution and REPL for node.js, with source map and native ESM support.
-* [nodemon](https://www.npmjs.com/package/nodemon)
-  * nodemon is a tool that helps develop node.js based applications by automatically restarting the node application when file changes in the directory are detected.
-* [eslint](https://www.npmjs.com/package/eslint)
-  * ESLint is a tool for identifying and reporting on patterns found in ECMAScript/JavaScript code.
-* [typescript-eslint](https://typescript-eslint.io/)
-  * Tooling which enables ESLint to support TypeScript.
-* [jest](https://www.npmjs.com/package/jest)
-  * Jest is a delightful JavaScript Testing Framework with a focus on simplicity.
-* [supertest](https://www.npmjs.com/package/supertest)
-  * HTTP assertions made easy via superagent.
-
-## Setup
+### Setup
 
 ```
 npm install
 ```
 
-## Lint
-
-```
-npm run lint
-```
-
-## Test
+### Test
 
 ```
 npm run test
 ```
 
-## Development
+### Development
 
 ```
 npm run dev
 ```
+
+
+## Description
+
+### Design Choices
+
+#### User 'authentitcation'
+This project uses the `src/logic/user.ts` logic in its middleware to ensure there is a user present in the request. This means there is no dedicated `user` endpoint as users are created on the fly in new requests that need them. For example, a request for `GET /api/tasks` will attempt to fetch the user with the `username` header credential before returning tasks. If it does not exist, then a user is created, and an empty task array is returned. This behavior works well with SSO or PassKey sign-in which does not require password management. 
+
+Later for user sign-in flow management reasons, the middleware that promotes it can be scoped to certain (or only one) endpoints that are known to be hit first upon user connection, like the `GET /api/tasks`. For this project, I have kept things simple: as long as there is a `username` in the headers, then the user-check-or-create middleware behavior will trigger.
+
+#### Endpoints
+##### `GET    /api/tasks`
+Gets tasks for user with `username` header, or everyone's tasks if the user is an Admin.
+
+##### `POST   /api/task`
+Create an empty task for user with `username` header.
+
+##### `PATCH  /api/task`
+Updates a task for user with `username` header. The accepted request body is the following:
+```
+{
+  task: {
+    _id:            string, // In MongoDB ObjectID format.
+    title?:         string,
+    description?:   string,
+    endDate?:       Date,
+    status?:        Pending | Completed
+  }
+}
+```
+
+##### `DELETE /api/task`
+Deletes a task for user with `username` header. The accepted request body is the following:
+```
+{
+  taskId: string // In MongoDB ObjectID format
+}
+```
+
+### Database
+This project uses the MongoDB Atlas free tier database. To use the repository, you would normally need to create a MongoDB Atlas account, create a database, and change the `LOCAL_MONGO_URI` variable in `.env`. 
+
+However, for this exercise, I have pushed my local version of `.env` which includes the credentials of the user I have created for the database. You can use these user credentials for testing as they are only used for this project.
+
+### Testing
+For this project, I have only had time to complete user end-to-end testing as showcased in the video demo. Unfortunately, the allocated time for this project did not allow for robust testing. However, this project does include JEST and Supertest as dependencies to make future testing simple.
+
+### Future Improvements
+The list for near-future suggested improvements includes:
+* Testing
+* Pagination for GET endpoints.
+* Passkey Authentication
+* Short-lived JWT sessions support
